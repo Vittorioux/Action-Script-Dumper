@@ -6,7 +6,7 @@ Simply run the following command (make sure to have Python installed).
 ```
 $ python actscr_dumper16.py <rom_file> <output_file> <data_file>
 ```
-where `rom_file` must be a supported ROM (currently EarthBound and Mother 2), `output_file` is the path to and name of the file where the dump will be saved, and `data_file` is the path to the , namely `modules/<file>.py`.
+where `rom_file` must be a supported ROM (currently EarthBound and Mother 2), `output_file` is the path to and name of the file where the dump will be saved, and `data_file` is the path to the data module for the specific ROM, namely `modules/<file>.py`.
 
 For example:
 ```
