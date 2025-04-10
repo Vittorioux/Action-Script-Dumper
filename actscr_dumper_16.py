@@ -72,25 +72,24 @@ def out_of_range(addr):
 
 # Error handler.
 def raise_error(code, data_1=None, data_2=None):
-	match code:
-		case 0:
-			msg = f"The data file is missing one of the required attributes ({data_1})."
-		case 1:
-			msg = f"One of the required attributes ({data_1}) in the data file is of the wrong type."
-		case 2:
-			msg = f"The ROM does not seem to be a valid {data_1} ROM."
-		case 3:
-			msg = f"Trying to read an invalid opcode {data_1} at {data_2}."
-		case 4:
-			msg = f"Trying to operate an object var higher than {MAX_VAR} at {data_1}."
-		case 5:
-			msg = f"Trying to use an invalid operation ({data_1} when max is {MAX_OPR}) at {data_2}."
-		case 6:
-			msg = f"Trying to use a multi-argument operation of size 0 at {data_1}."
-		case 7:
-			msg = f"Trying to read an invalid argument type ({data_1})."
-		case _:
-			msg = "An unknown exception ocurred."
+	if code == 0:
+		msg = f"The data file is missing one of the required attributes ({data_1})."
+	elif code == 1:
+		msg = f"One of the required attributes ({data_1}) in the data file is of the wrong type."
+	elif code == 2:
+		msg = f"The ROM does not seem to be a valid {data_1} ROM."
+	elif code == 3:
+		msg = f"Trying to read an invalid opcode {data_1} at {data_2}."
+	elif code == 4:
+		msg = f"Trying to operate an object var higher than {MAX_VAR} at {data_1}."
+	elif code == 5:
+		msg = f"Trying to use an invalid operation ({data_1} when max is {MAX_OPR}) at {data_2}."
+	elif code == 6:
+		msg = f"Trying to use a multi-argument operation of size 0 at {data_1}."
+	elif code == 7:
+		msg = f"Trying to read an invalid argument type ({data_1})."
+	else:
+		msg = "An unknown exception ocurred."
 	
 	print(f"ERROR: " + msg)
 	sys.exit()
@@ -184,54 +183,53 @@ def read_from_rom(addr):
 # Reads an argument.
 # Returns a tuple (type, value).
 def read_arg(arg):
-	match arg:
-		case 'u_8' | 'var' | 'opr':
-			value = f'{rom.read(1)[0]}'
-		case 'u_16':
-			value = f'{int.from_bytes(rom.read(2), "little")}'
-		case 'hex_8':
-			value = f'0x{rom.read(1)[0]:02X}'
-		case 'hex_16':
-			value = f'0x{int.from_bytes(rom.read(2), "little"):04X}'
-		case 'hex_24':
-			value = f'0x{int.from_bytes(rom.read(3), "little"):04X}'
-		case 'hex_32':
-			high_short = int.from_bytes(rom.read(2), "little")
-			low_short = int.from_bytes(rom.read(2), "little")
-			value = f'0x{0x10000 * high_short + low_short:X}'
-		case 's_8':
-			value = f'{u_to_s_8(rom.read(1)[0])}'
-		case 's_16':
-			value = f'{u_to_s_16(int.from_bytes(rom.read(2), "little"))}'
-		case 'l_16':
-			short_addr = int.from_bytes(rom.read(2), "little")
-			long_addr = BANK_C0_OFFSET + ((addr - header) & 0xFF0000) + short_addr
-			
-			if out_of_range(long_addr - BANK_C0_OFFSET):
-				value = f'0x{short_addr:04X}'
+	if arg in ['u_8', 'var', 'opr']:
+		value = f'{rom.read(1)[0]}'
+	elif arg == 'u_16':
+		value = f'{int.from_bytes(rom.read(2), "little")}'
+	elif arg == 'hex_8':
+		value = f'0x{rom.read(1)[0]:02X}'
+	elif arg == 'hex_16':
+		value = f'0x{int.from_bytes(rom.read(2), "little"):04X}'
+	elif arg == 'hex_24':
+		value = f'0x{int.from_bytes(rom.read(3), "little"):04X}'
+	elif arg == 'hex_32':
+		high_short = int.from_bytes(rom.read(2), "little")
+		low_short = int.from_bytes(rom.read(2), "little")
+		value = f'0x{0x10000 * high_short + low_short:X}'
+	elif arg == 's_8':
+		value = f'{u_to_s_8(rom.read(1)[0])}'
+	elif arg == 's_16':
+		value = f'{u_to_s_16(int.from_bytes(rom.read(2), "little"))}'
+	elif arg == 'l_16':
+		short_addr = int.from_bytes(rom.read(2), "little")
+		long_addr = BANK_C0_OFFSET + ((addr - header) & 0xFF0000) + short_addr
+		
+		if out_of_range(long_addr - BANK_C0_OFFSET):
+			value = f'0x{short_addr:04X}'
+		else:
+			for entry in data_module.label_list:
+				if entry["address"] == long_addr:
+					value = entry["label"][-1]
+					break
 			else:
-				for entry in data_module.label_list:
-					if entry["address"] == long_addr:
-						value = entry["label"][-1]
-						break
-				else:
-					value = f'{DEF_LABEL_START}{long_addr:X}'
-					labels.append(long_addr)
-		case 'l_24':
-			long_addr = int.from_bytes(rom.read(3), "little")
-			
-			if out_of_range(long_addr - BANK_C0_OFFSET):
-				value = f'0x{long_addr:X}'
+				value = f'{DEF_LABEL_START}{long_addr:X}'
+				labels.append(long_addr)
+	elif arg == 'l_24':
+		long_addr = int.from_bytes(rom.read(3), "little")
+		
+		if out_of_range(long_addr - BANK_C0_OFFSET):
+			value = f'0x{long_addr:X}'
+		else:
+			for entry in data_module.label_list:
+				if entry["address"] == long_addr:
+					value = entry["label"][-1]
+					break
 			else:
-				for entry in data_module.label_list:
-					if entry["address"] == long_addr:
-						value = entry["label"][-1]
-						break
-				else:
-					value = f'{DEF_LABEL_START}{long_addr:X}'
-					labels.append(long_addr)
-		case _:
-			raise_error(7, arg)
+				value = f'{DEF_LABEL_START}{long_addr:X}'
+				labels.append(long_addr)
+	else:
+		raise_error(7, arg)
 	
 	if arg.endswith('_8'):
 		type = STR_BYTE
