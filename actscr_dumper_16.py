@@ -268,6 +268,10 @@ def write_line(addr, data):
 	if data.get("asmcall") != None:
 		if data["asmcall"].get("name") != None:
 			line_to_write += data["asmcall"]["name"]
+			
+			if data.get("wait") != None:
+				line_to_write += f"{WAITED_OPCODES_APPEND}{data["wait"]}"
+			
 			if data["asmcall"].get("args"):
 				line_to_write += "("
 				
@@ -281,7 +285,12 @@ def write_line(addr, data):
 			if data["asmcall"].get("comment"):
 				line_to_write += f"   {COMMENT_WRAPPER[0]}{data["asmcall"]["comment"]}{COMMENT_WRAPPER[1]}"
 		else:
-			line_to_write += f"{name}(0x{data["asmcall"]["address"]:X})"
+			line_to_write += f"{name}"
+			
+			if data.get("wait") != None:
+				line_to_write += f"{WAITED_OPCODES_APPEND}{data["wait"]}"
+				
+			line_to_write += f"(0x{data["asmcall"]["address"]:X})"
 			
 			if data["asmcall"].get("comment"):
 				line_to_write += f"   {COMMENT_WRAPPER[0]}{data["asmcall"]["comment"]}{COMMENT_WRAPPER[1]}"
