@@ -66,7 +66,7 @@ def u_to_s_16(val):
 # Checks if a certain address is outside the specified ranges to read.
 def out_of_range(addr):
 	for start, end in RANGES:
-		if start < addr < end:
+		if addr in range(start, end):
 			return False
 	return True
 
